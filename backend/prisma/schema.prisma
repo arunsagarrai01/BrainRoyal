@@ -1,0 +1,192 @@
+// Quiz Battle Arena — Prisma schema
+// PostgreSQL relational model with foreign keys and indexes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum BattleMode {
+  PVP
+  AI
+  PRACTICE
+}
+
+enum BattleStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  avatar       String?
+  bio          String?
+  role         Role     @default(USER)
+  level        Int      @default(1)
+  points       Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  battlesAsP1       Battle[]           @relation("BattlePlayer1")
+  battlesAsP2       Battle[]           @relation("BattlePlayer2")
+  battlesWon        Battle[]           @relation("BattleWinner")
+  playerAnswers     PlayerAnswer[]
+  userAchievements  UserAchievement[]
+
+  @@index([points])
+  @@index([email])
+  @@index([username])
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  icon        String
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+
+  questions Question[]
+  battles   Battle[]
+
+  @@index([name])
+}
+
+model Question {
+  id           String     @id @default(uuid())
+  categoryId   String
+  questionText String
+  difficulty   Difficulty @default(MEDIUM)
+  timeLimit    Int        @default(15) // seconds
+  points       Int        @default(100)
+  createdAt    DateTime   @default(now())
+
+  category        Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  answers         Answer[]
+  battleQuestions BattleQuestion[]
+  playerAnswers   PlayerAnswer[]
+
+  @@index([categoryId])
+  @@index([difficulty])
+}
+
+model Answer {
+  id         String  @id @default(uuid())
+  questionId String
+  answerText String
+  isCorrect  Boolean @default(false)
+
+  question             Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedByPlayers    PlayerAnswer[] @relation("SelectedAnswer")
+
+  @@index([questionId])
+}
+
+model Battle {
+  id           String       @id @default(uuid())
+  player1Id    String
+  player2Id    String?      // null for AI / practice (or filled with AI pseudo-user)
+  categoryId   String
+  mode         BattleMode   @default(AI)
+  difficulty   Difficulty   @default(MEDIUM)
+  status       BattleStatus @default(WAITING)
+  totalQuestions Int        @default(10)
+  winnerId     String?
+  player1Score Int          @default(0)
+  player2Score Int          @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+
+  player1 User      @relation("BattlePlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2 User?     @relation("BattlePlayer2", fields: [player2Id], references: [id], onDelete: SetNull)
+  winner  User?     @relation("BattleWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  battleQuestions BattleQuestion[]
+  playerAnswers   PlayerAnswer[]
+
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model BattleQuestion {
+  id            String @id @default(uuid())
+  battleId      String
+  questionId    String
+  questionOrder Int
+
+  battle   Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([battleId, questionOrder])
+  @@index([battleId])
+}
+
+model PlayerAnswer {
+  id               String   @id @default(uuid())
+  battleId         String
+  questionId       String
+  userId           String
+  selectedAnswerId String?
+  isCorrect        Boolean  @default(false)
+  responseTime     Int      @default(0) // milliseconds
+  pointsEarned     Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  battle         Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedAnswer Answer?  @relation("SelectedAnswer", fields: [selectedAnswerId], references: [id], onDelete: SetNull)
+
+  @@unique([battleId, questionId, userId])
+  @@index([battleId])
+  @@index([userId])
+}
+
+model Achievement {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String
+  icon        String
+  // requirement is a machine-readable rule, e.g. {"type":"wins","value":1}
+  requirement Json
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}

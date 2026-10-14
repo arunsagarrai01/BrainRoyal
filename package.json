@@ -1,0 +1,23 @@
+{
+  "name": "quiz-battle-arena",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Quiz Battle Arena - a real-time multiplayer quiz platform",
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces --include-workspace-root",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build:frontend": "npm run build --workspace frontend",
+    "db:migrate": "npm run db:migrate --workspace backend",
+    "db:seed": "npm run db:seed --workspace backend",
+    "db:generate": "npm run db:generate --workspace backend"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
