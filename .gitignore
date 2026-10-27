@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# database / runtime data
+server/.pgdata/
+server/.pgdata-test/
+*.sqlite
+*.db
+
+# logs
+*.log
+logs/
+
+# build output
+dist/
+build/
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# testing
+coverage/

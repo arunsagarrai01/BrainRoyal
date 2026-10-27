@@ -1,20 +1,13 @@
 {
   "name": "brainroyale",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "BrainRoyale - a banana puzzle quiz game (React + Vite, Express, PostgreSQL)",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/arunsagarrai01/BrainRoyal.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/arunsagarrai01/BrainRoyal/issues"
-  },
-  "homepage": "https://github.com/arunsagarrai01/BrainRoyal#readme"
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "start:server": "npm --prefix server start",
+    "build": "npm --prefix client run build",
+    "test:api": "npm --prefix server run test:api"
+  }
 }

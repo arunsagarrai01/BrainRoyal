@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../api";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -11,19 +11,19 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      api
-        .get("/auth/me")
-        .then((res) => {
-          setUser(res.data.user);
-        })
-        .catch(() => {
-          localStorage.removeItem("token");
-        })
-        .finally(() => setLoading(false));
-    } else {
+    if (!token) {
       setLoading(false);
+      return;
     }
+
+    api
+      .get("/auth/me")
+      .then(({ data }) => setUser(data.user))
+      .catch(() => {
+        localStorage.removeItem("token");
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = (token, userData) => {

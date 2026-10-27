@@ -1,49 +1,79 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setBusy(true);
     try {
-      const res = await api.post("/auth/login", { email, password });
-      login(res.data.token, res.data.user);
+      const { data } = await api.post("/auth/login", form);
+      login(data.token, data.user);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "2rem auto", padding: "2rem" }}>
-      <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem" }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem" }}
-        />
-        <button type="submit" style={{ padding: "0.5rem 1rem" }}>Login</button>
-      </form>
-      <p>Don't have an account? <Link to="/register">Register</Link></p>
+    <div className="page page--narrow auth-wrap">
+      <div className="auth-card">
+        <h1>Welcome back 🍌</h1>
+        <p>Sign in to keep your streak going.</p>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Your password"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+
+          <button className="btn btn--primary btn--block" type="submit" disabled={busy}>
+            {busy ? "Signing in…" : "Login"}
+          </button>
+        </form>
+
+        <p className="auth-foot">
+          New here? <Link to="/register">Create an account</Link>
+        </p>
+      </div>
     </div>
   );
 };

@@ -1,102 +1,199 @@
-# BrainRoyale
+# 🍌 BrainRoyale
 
-A web-based quiz game where players solve banana puzzle questions fetched from the Banana API. Built with React + Vite, Express.js, and PostgreSQL.
+A full-stack banana-puzzle quiz game. Players register, solve image-based equations
+from the [Banana API](https://marcconrad.com/uob/banana/api.php), earn points, and
+compete on a global leaderboard.
+
+Built for a college project demonstrating **version control**, **interoperability**,
+**event-driven programming**, and **virtual identity**.
+
+---
+
+## Tech stack
+
+| Layer     | Technology                                              |
+| --------- | ------------------------------------------------------- |
+| Frontend  | React 19, Vite, React Router, Axios                     |
+| Backend   | Node.js, Express 5 (ES modules)                         |
+| Database  | PostgreSQL (`pg`) with an embedded PGlite fallback      |
+| Auth      | JWT (7-day tokens) + bcrypt password hashing            |
+| Styling   | Hand-written CSS (banana theme)                         |
+
+---
 
 ## Features
 
-- User authentication (Login/Register)
-- Dashboard to access game and leaderboard
-- Play brain teaser game - solve image-based puzzles
-- Leaderboard to track top scores
-- Integration with Banana API for questions
+- **Register / Login** with validation, hashed passwords, and JWT sessions
+- **Dashboard** with personal best, games played, global stats
+- **Game** — every round fetches a fresh puzzle; the answer is checked **server-side**
+  so the solution never travels to the browser before you answer
+- **Leaderboard** ranked by best score
+- **Auto-created schema** on first boot (no manual SQL required)
+- **Resilient DB layer** — uses real PostgreSQL when reachable, otherwise falls back to
+  an embedded, file-persisted PostgreSQL (PGlite)
 
-## Tech Stack
+---
 
-- **Frontend**: React, Vite, React Router, Axios
-- **Backend**: Node.js, Express.js
-- **Database**: PostgreSQL
-- **Authentication**: JWT, bcryptjs
-
-## Project Structure
+## Project structure
 
 ```
 BrainRoyale/
-├── client/          # React + Vite frontend
-├── server/          # Express backend
-│   ├── config/      # Database configuration
-│   ├── controllers/ # Route controllers
-│   ├── db/          # Database schema
-│   ├── middleware/  # Auth middleware
-│   ├── routes/      # API routes
-│   └── utils/       # Utility functions
-└── shared/          # Shared code
+├── client/                  # React + Vite frontend
+│   └── src/
+│       ├── components/Navbar.jsx
+│       ├── context/AuthContext.jsx
+│       ├── pages/{Login,Register,Dashboard,Game,Leaderboard}.jsx
+│       ├── api.js           # Axios instance + JWT interceptor
+│       └── App.jsx
+├── server/                  # Express backend
+│   ├── config/db.js         # pg Pool + PGlite fallback
+│   ├── controllers/         # auth + game logic
+│   ├── db/{init.js,schema.sql}
+│   ├── middleware/auth.js   # JWT guard
+│   ├── routes/
+│   ├── scripts/test-api.mjs # end-to-end API tests
+│   ├── utils/{jwt.js,questionStore.js}
+│   └── index.js
+├── .gitignore
+├── package.json             # root convenience scripts
+└── README.md
 ```
 
-## Setup Instructions
+---
 
-### Prerequisites
+## Getting started
 
-- Node.js (v16+)
-- PostgreSQL installed and running
+### 1. Install dependencies
 
-### Database Setup
+```bash
+cd server && npm install
+cd ../client && npm install
+```
 
-1. Create a PostgreSQL database named `brainroyale`
-2. Run the schema from `server/db/schema.sql`
+### 2. Configure environment
+
+```bash
+cd server
+cp .env.example .env
+```
+
+### 3. Run
+
+```bash
+# terminal 1
+npm run dev:server      # http://localhost:5000
+
+# terminal 2
+npm run dev:client      # http://localhost:5173
+```
+
+The server prints which database driver it is using:
+
+```
+[db] Using PostgreSQL via DATABASE_URL
+# or
+[db] Using embedded PostgreSQL (PGlite) at server/.pgdata
+```
+
+**Using real PostgreSQL:** create the database once, then start the server — tables
+are created automatically.
 
 ```sql
 CREATE DATABASE brainroyale;
 ```
 
-Then run the schema file.
+If your PostgreSQL server is unavailable, the backend still starts using the embedded
+database (`DB_DRIVER=auto`, `DB_FALLBACK=true`). Set `DB_DRIVER=pglite` to force the
+embedded database, or `DB_FALLBACK=false` to fail fast instead.
 
-### Backend Setup
+### Demo account
 
-```bash
-cd server
-npm install
-# Update .env with your database credentials
-npm run dev
-```
+| Email                | Password  |
+| -------------------- | --------- |
+| `banana@example.com` | `banana123` |
 
-### Frontend Setup
+---
 
-```bash
-cd client
-npm install
-npm run dev
-```
+## API reference
 
-The app will run on:
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+Base URL: `http://localhost:5000`
 
-## API Endpoints
+| Method | Endpoint                 | Auth | Description                                      |
+| ------ | ------------------------ | ---- | ------------------------------------------------ |
+| GET    | `/`                      | –    | API info + endpoint list                         |
+| GET    | `/api/health`            | –    | Health check + active DB driver                  |
+| POST   | `/api/auth/register`     | –    | Create account → `{ token, user }`               |
+| POST   | `/api/auth/login`        | –    | Sign in → `{ token, user }`                      |
+| GET    | `/api/auth/me`           | ✅   | Profile with `best_score` and `games_played`     |
+| GET    | `/api/game/question`     | –    | `{ questionId, question, expiresIn }`            |
+| POST   | `/api/game/answer`       | –    | `{ questionId, answer }` → `{ correct, solution }` |
+| POST   | `/api/game/score`        | ✅   | `{ score }` → `{ bestScore }`                    |
+| GET    | `/api/game/leaderboard`  | –    | Top 50 players                                   |
+| GET    | `/api/game/stats`        | –    | Dashboard counters                               |
 
-### Auth
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (protected)
+Authentication uses `Authorization: Bearer <token>`.
 
-### Game
-- `GET /api/game/question` - Fetch question from Banana API
-- `POST /api/game/score` - Submit score (protected)
-- `GET /api/game/leaderboard` - Get leaderboard
+### Banana API integration
 
-## Banana API
+`GET https://marcconrad.com/uob/banana/api.php` returns:
 
-Uses [https://marcconrad.com/uob/banana/api.php](https://marcconrad.com/uob/banana/api.php) which returns:
 ```json
 {
-  "question": "https://example.com/image.png",
+  "question": "https://www.sanfoh.com/uob/banana/data/txxxxx.png",
   "solution": 6
 }
 ```
-The game displays the image as question and expects numeric answer matching solution.
 
-## Meeting College Criteria
+The backend keeps `solution` in a short-lived in-memory store keyed by `questionId`
+(5-minute TTL, single use) and only returns it after the player answers.
 
-- **Version Control**: Git repository initialized
-- **Interoperability**: RESTful API connecting React frontend with Express backend, integrates external Banana API
-- **Event-Driven Programming**: React event handlers, Express middleware, async/await event handling
-- **Virtual Identity**: User authentication with JWT tokens and secure password hashing with bcrypt
+---
+
+## Testing
+
+End-to-end suite covering every endpoint (22 assertions):
+
+```bash
+# terminal 1 – test server on a separate port and database
+cd server
+$env:PORT=5001; $env:NODE_ENV="test"; $env:DB_DRIVER="pglite"
+$env:PGLITE_DIR="$(Get-Location)\.pgdata-test"
+node index.js
+
+# terminal 2
+$env:API_URL="http://localhost:5001"
+npm run test:api
+```
+
+On macOS/Linux:
+
+```bash
+PORT=5001 NODE_ENV=test DB_DRIVER=pglite PGLITE_DIR=./.pgdata-test node index.js
+API_URL=http://localhost:5001 npm run test:api
+```
+
+Expected result:
+
+```
+22 passed, 0 failed
+```
+
+---
+
+## How the college criteria are met
+
+| Criterion                     | Implementation                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| **Version control**           | Git repository with `.gitignore`, structured commits, no secrets committed     |
+| **Interoperability**          | REST API between React and Express; consumes the external Banana API; JSON contracts; CORS-enabled |
+| **Event-driven programming**  | React event handlers and state updates; Express middleware pipeline; async request/response events; socket-ready architecture |
+| **Virtual identity**          | User accounts with bcrypt-hashed passwords, signed JWTs, protected routes, per-user scores and leaderboard identity |
+
+---
+
+## Notes
+
+- `.env` is intentionally untracked. Use `.env.example` as the template.
+- The embedded database is stored in `server/.pgdata` (ignored by Git).
+- `NODE_ENV=test` additionally exposes the puzzle solution so automated tests can
+  verify the correct-answer path. It is never exposed in development or production.
