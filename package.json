@@ -1,23 +1,20 @@
 {
-  "name": "quiz-battle-arena",
-  "private": true,
+  "name": "brainroyale",
   "version": "1.0.0",
-  "description": "Quiz Battle Arena - a real-time multiplayer quiz platform",
-  "type": "module",
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "install:all": "npm install --workspaces --include-workspace-root",
-    "dev:backend": "npm run dev --workspace backend",
-    "dev:frontend": "npm run dev --workspace frontend",
-    "build:frontend": "npm run build --workspace frontend",
-    "db:migrate": "npm run db:migrate --workspace backend",
-    "db:seed": "npm run db:seed --workspace backend",
-    "db:generate": "npm run db:generate --workspace backend"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": ">=18"
-  }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arunsagarrai01/BrainRoyal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arunsagarrai01/BrainRoyal/issues"
+  },
+  "homepage": "https://github.com/arunsagarrai01/BrainRoyal#readme"
 }

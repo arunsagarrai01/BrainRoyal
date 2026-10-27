@@ -1,19 +1,102 @@
-# React + Vite
+# BrainRoyale
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A web-based quiz game where players solve banana puzzle questions fetched from the Banana API. Built with React + Vite, Express.js, and PostgreSQL.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- User authentication (Login/Register)
+- Dashboard to access game and leaderboard
+- Play brain teaser game - solve image-based puzzles
+- Leaderboard to track top scores
+- Integration with Banana API for questions
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- **Frontend**: React, Vite, React Router, Axios
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL
+- **Authentication**: JWT, bcryptjs
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+## Project Structure
 
-## Expanding the Oxlint configuration
+```
+BrainRoyale/
+├── client/          # React + Vite frontend
+├── server/          # Express backend
+│   ├── config/      # Database configuration
+│   ├── controllers/ # Route controllers
+│   ├── db/          # Database schema
+│   ├── middleware/  # Auth middleware
+│   ├── routes/      # API routes
+│   └── utils/       # Utility functions
+└── shared/          # Shared code
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js (v16+)
+- PostgreSQL installed and running
+
+### Database Setup
+
+1. Create a PostgreSQL database named `brainroyale`
+2. Run the schema from `server/db/schema.sql`
+
+```sql
+CREATE DATABASE brainroyale;
+```
+
+Then run the schema file.
+
+### Backend Setup
+
+```bash
+cd server
+npm install
+# Update .env with your database credentials
+npm run dev
+```
+
+### Frontend Setup
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+The app will run on:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000
+
+## API Endpoints
+
+### Auth
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (protected)
+
+### Game
+- `GET /api/game/question` - Fetch question from Banana API
+- `POST /api/game/score` - Submit score (protected)
+- `GET /api/game/leaderboard` - Get leaderboard
+
+## Banana API
+
+Uses [https://marcconrad.com/uob/banana/api.php](https://marcconrad.com/uob/banana/api.php) which returns:
+```json
+{
+  "question": "https://example.com/image.png",
+  "solution": 6
+}
+```
+The game displays the image as question and expects numeric answer matching solution.
+
+## Meeting College Criteria
+
+- **Version Control**: Git repository initialized
+- **Interoperability**: RESTful API connecting React frontend with Express backend, integrates external Banana API
+- **Event-Driven Programming**: React event handlers, Express middleware, async/await event handling
+- **Virtual Identity**: User authentication with JWT tokens and secure password hashing with bcrypt
