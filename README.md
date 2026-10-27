@@ -125,13 +125,32 @@ Base URL: `http://localhost:5000`
 | POST   | `/api/auth/register`     | –    | Create account → `{ token, user }`               |
 | POST   | `/api/auth/login`        | –    | Sign in → `{ token, user }`                      |
 | GET    | `/api/auth/me`           | ✅   | Profile with `best_score` and `games_played`     |
-| GET    | `/api/game/question`     | –    | `{ questionId, question, expiresIn }`            |
+| GET    | `/api/game/question`     | –    | `{ questionId, question, expiresIn, solution? }`  |
 | POST   | `/api/game/answer`       | –    | `{ questionId, answer }` → `{ correct, solution }` |
-| POST   | `/api/game/score`        | ✅   | `{ score }` → `{ bestScore }`                    |
+| POST   | `/api/game/score`        | ✅   | `{ score, runId? }` → `{ runId, bestScore }`      |
 | GET    | `/api/game/leaderboard`  | –    | Top 50 players                                   |
 | GET    | `/api/game/stats`        | –    | Dashboard counters                               |
 
 Authentication uses `Authorization: Bearer <token>`.
+
+### How a run is scored
+
+A play-through is identified by a `runId`. The first `POST /api/game/score` of a
+run omits it, and the server returns a fresh id. Every later save of the same run
+sends that id back, so the row is updated instead of duplicated:
+
+```jsonc
+// first correct answer -> new run
+POST /api/game/score  { "score": 1 }
+                     -> 201 { "runId": "b0f1…", "bestScore": 1 }
+
+// next correct answer -> same run
+POST /api/game/score  { "score": 2, "runId": "b0f1…" }
+                     -> 201 { "runId": "b0f1…", "bestScore": 2 }
+```
+
+The leaderboard therefore reflects progress after **every** correct answer, while
+`games_played` still counts one row per run.
 
 ### Banana API integration
 
@@ -151,7 +170,7 @@ The backend keeps `solution` in a short-lived in-memory store keyed by `question
 
 ## Testing
 
-End-to-end suite covering every endpoint (22 assertions):
+End-to-end suite covering every endpoint, including run/scoring behaviour (26 assertions):
 
 ```bash
 # terminal 1 – test server on a separate port and database
@@ -175,8 +194,13 @@ API_URL=http://localhost:5001 npm run test:api
 Expected result:
 
 ```
-22 passed, 0 failed
+26 passed, 0 failed
 ```
+
+> `SHOW_ANSWERS=true` (also enabled automatically when `NODE_ENV=test`) adds
+> `solution` to `GET /api/game/question`, which lets the browser console print the
+> answer and lets the suite test the correct-answer path. Set it to `false` to hide
+> the answer outside tests.
 
 ---
 

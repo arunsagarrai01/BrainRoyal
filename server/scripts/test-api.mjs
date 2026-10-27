@@ -165,28 +165,71 @@ async function main() {
     auth: true,
   });
   check(
-    "score saves and returns best",
-    score.status === 201 && Number(score.data?.bestScore) === 7,
+    "score save starts a run",
+    score.status === 201 &&
+      typeof score.data?.runId === "string" &&
+      score.data.runId.length >= 8 &&
+      Number(score.data?.bestScore) === 7,
     JSON.stringify(score.data)
   );
+  const runId = score.data?.runId;
 
-  const betterScore = await call("POST", "/api/game/score", {
+  const sameRun = await call("POST", "/api/game/score", {
+    body: { score: 9, runId },
+    auth: true,
+  });
+  check(
+    "same run updates the existing row",
+    sameRun.status === 201 && Number(sameRun.data?.bestScore) === 9,
+    JSON.stringify(sameRun.data)
+  );
+
+  const lowerInRun = await call("POST", "/api/game/score", {
+    body: { score: 4, runId },
+    auth: true,
+  });
+  check(
+    "run score never decreases",
+    lowerInRun.status === 201 && Number(lowerInRun.data?.bestScore) === 9,
+    JSON.stringify(lowerInRun.data)
+  );
+
+  const meAfterRun = await call("GET", "/api/auth/me", { auth: true });
+  check(
+    "one run counts as one game",
+    meAfterRun.data?.user?.games_played === 1 &&
+      meAfterRun.data?.user?.best_score === 9,
+    JSON.stringify(meAfterRun.data?.user)
+  );
+
+  const newRun = await call("POST", "/api/game/score", {
     body: { score: 12 },
     auth: true,
   });
   check(
-    "best score updates",
-    betterScore.status === 201 && Number(betterScore.data?.bestScore) === 12
+    "a save without runId starts a new run",
+    newRun.status === 201 &&
+      newRun.data?.runId !== runId &&
+      Number(newRun.data?.bestScore) === 12,
+    JSON.stringify(newRun.data)
+  );
+
+  const meAfterTwoRuns = await call("GET", "/api/auth/me", { auth: true });
+  check(
+    "second run increments games_played",
+    meAfterTwoRuns.data?.user?.games_played === 2 &&
+      meAfterTwoRuns.data?.user?.best_score === 12,
+    JSON.stringify(meAfterTwoRuns.data?.user)
   );
 
   const leaderboard = await call("GET", "/api/game/leaderboard");
-  const top = leaderboard.data?.leaderboard?.[0];
+  const row = leaderboard.data?.leaderboard?.find((p) => p.username === user.username);
   check(
     "leaderboard lists the player",
     leaderboard.status === 200 &&
       Array.isArray(leaderboard.data?.leaderboard) &&
-      top?.username === user.username &&
-      top?.maxScore === 12,
+      row?.maxScore === 12 &&
+      row?.gamesPlayed === 2,
     JSON.stringify(leaderboard.data)
   );
 

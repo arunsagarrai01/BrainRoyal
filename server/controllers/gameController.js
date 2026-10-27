@@ -1,4 +1,5 @@
 import axios from "axios";
+import crypto from "node:crypto";
 import db from "../config/db.js";
 import { saveQuestion, takeQuestion } from "../utils/questionStore.js";
 
@@ -31,8 +32,9 @@ export const getQuestion = async (req, res) => {
       expiresIn: 300,
     };
 
-    // Automated tests need to know the expected value. Never exposed outside NODE_ENV=test.
-    if (process.env.NODE_ENV === "test") {
+    // Debug helper: send the answer to the client so it can be logged in the
+    // browser console. Set SHOW_ANSWERS=false in .env to hide it.
+    if (process.env.SHOW_ANSWERS !== "false" || process.env.NODE_ENV === "test") {
       payload.solution = data.solution;
     }
 
@@ -59,6 +61,7 @@ export const checkAnswer = async (req, res) => {
   }
 
   const entry = takeQuestion(questionId);
+  console.log("Entry", entry)
   if (!entry) {
     return res
       .status(410)
@@ -71,6 +74,7 @@ export const checkAnswer = async (req, res) => {
   }
 
   const correct = numericAnswer === entry.solution;
+  console.log(correct)
 
   return res.status(200).json({
     correct,
@@ -79,20 +83,40 @@ export const checkAnswer = async (req, res) => {
 };
 
 /**
- * POST /api/game/score  { score }
+ * POST /api/game/score  { score, runId? }
+ *
+ * The first save of a run omits runId: the server creates a new run and returns
+ * its id. Later saves send that id back, so progress updates the same row.
  */
 export const submitScore = async (req, res) => {
   try {
     const score = Number(req.body?.score);
+    const providedRunId = req.body?.runId ? String(req.body.runId) : null;
 
     if (!Number.isInteger(score) || score < 0 || score > 10000) {
       return res.status(400).json({ message: "Score must be an integer from 0 to 10000" });
     }
 
-    await db.query("INSERT INTO scores (user_id, score) VALUES ($1, $2)", [
-      req.user.id,
-      score,
-    ]);
+    if (providedRunId && (providedRunId.length < 8 || providedRunId.length > 64)) {
+      return res.status(400).json({ message: "Invalid runId" });
+    }
+
+    let runId = providedRunId;
+
+    if (runId) {
+      await db.query(
+        `INSERT INTO scores (user_id, score, run_id) VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, run_id)
+         DO UPDATE SET score = GREATEST(scores.score, EXCLUDED.score)`,
+        [req.user.id, score, runId]
+      );
+    } else {
+      runId = crypto.randomUUID();
+      await db.query(
+        "INSERT INTO scores (user_id, score, run_id) VALUES ($1, $2, $3)",
+        [req.user.id, score, runId]
+      );
+    }
 
     const best = await db.query(
       "SELECT COALESCE(MAX(score), 0) AS best FROM scores WHERE user_id = $1",
@@ -101,6 +125,7 @@ export const submitScore = async (req, res) => {
 
     return res.status(201).json({
       message: "Score saved successfully",
+      runId,
       bestScore: Number(best.rows[0].best),
     });
   } catch (err) {

@@ -10,8 +10,13 @@ CREATE TABLE IF NOT EXISTS scores (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   score INTEGER DEFAULT 0,
+  run_id VARCHAR(64),
   played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- One row per play-through; the score is updated as the run progresses.
+ALTER TABLE scores ADD COLUMN IF NOT EXISTS run_id VARCHAR(64);
+CREATE UNIQUE INDEX IF NOT EXISTS scores_user_run_idx ON scores (user_id, run_id);
 
 CREATE TABLE IF NOT EXISTS game_sessions (
   id SERIAL PRIMARY KEY,

@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 
+const newRunId = () =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 const Game = () => {
   const [puzzle, setPuzzle] = useState(null);
   const [answer, setAnswer] = useState("");
@@ -13,6 +18,9 @@ const Game = () => {
   const [savedBest, setSavedBest] = useState(null);
   const [error, setError] = useState("");
   const nextTimer = useRef(null);
+  // One id per play-through, generated synchronously so an in-flight save from
+  // the previous run can never leak into the next one.
+  const activeRunId = useRef(newRunId());
 
   const fetchQuestion = useCallback(async () => {
     setLoading(true);
@@ -22,6 +30,11 @@ const Game = () => {
     try {
       const { data } = await api.get("/game/question");
       setPuzzle(data);
+
+      // 🍌 Debug helper: print the correct answer to the browser console.
+      if (data.solution !== undefined) {
+        console.log("🍌 [BrainRoyale] Correct answer:", data.solution);
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -38,14 +51,22 @@ const Game = () => {
     return () => clearTimeout(nextTimer.current);
   }, [fetchQuestion]);
 
+  // Persists the current run. Every correct answer updates the same score row.
+  // The run id is captured when the call starts, so restarting mid-request is safe.
+  const saveScore = useCallback(async (value, runId = activeRunId.current) => {
+    try {
+      const { data } = await api.post("/game/score", { score: value, runId });
+      setSavedBest(data.bestScore);
+      return data.bestScore;
+    } catch (err) {
+      console.error("Could not save score:", err);
+      return null;
+    }
+  }, []);
+
   const endGame = async (finalScore) => {
     setPhase("over");
-    try {
-      const { data } = await api.post("/game/score", { score: finalScore });
-      setSavedBest(data.bestScore);
-    } catch {
-      setSavedBest(null);
-    }
+    await saveScore(finalScore);
   };
 
   const handleSubmit = async (e) => {
@@ -69,6 +90,7 @@ const Game = () => {
         const nextScore = score + 1;
         setScore(nextScore);
         setFeedback({ type: "ok", text: "Correct! Next puzzle incoming…" });
+        saveScore(nextScore); // persist right away so the leaderboard updates
         nextTimer.current = setTimeout(fetchQuestion, 900);
       } else {
         setFeedback({
@@ -97,6 +119,7 @@ const Game = () => {
     setScore(0);
     setSavedBest(null);
     setPhase("playing");
+    activeRunId.current = newRunId(); // fresh run -> separate leaderboard entry
     fetchQuestion();
   };
 
