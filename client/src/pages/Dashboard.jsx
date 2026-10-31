@@ -92,7 +92,8 @@ const Dashboard = () => {
         <div className="card">
           <h3>3. Beat the board</h3>
           <p className="muted">
-            One wrong answer ends the run. Your best score is saved forever.
+            Three lives, a 30-second timer and streaks. Your best score is saved
+            forever.
           </p>
         </div>
       </div>

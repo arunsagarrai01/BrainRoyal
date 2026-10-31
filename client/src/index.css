@@ -1,15 +1,57 @@
+/*
+ * Theme tokens
+ * ------------
+ * Every colour used by the app comes from these variables, so switching
+ * `data-theme` on <html> re-skins the whole UI without touching components.
+ *
+ * Light is the default; `:root[data-theme="dark"]` overrides the same names.
+ * `--ink` is deliberately NOT overridden: it is the dark text colour used on
+ * yellow surfaces (buttons, badges, avatars), which must stay dark in both themes.
+ */
 :root {
+  color-scheme: light;
+
+  /* brand */
   --banana: #ffd60a;
   --banana-deep: #ffc300;
   --banana-soft: #fff6c9;
+
+  /* text */
   --brown: #2b1d0e;
   --brown-soft: #5a4632;
+  --ink: #2b1d0e;
+
+  /* surfaces */
   --cream: #fffdf5;
   --white: #ffffff;
-  --green: #22a06b;
-  --red: #d92d20;
   --border: #eadfc4;
   --shadow: 0 14px 34px rgba(43, 29, 14, 0.12);
+
+  /* status */
+  --green: #22a06b;
+  --red: #d92d20;
+
+  --ok-bg: #e7f7ef;
+  --ok-text: #147a4d;
+  --ok-border: #b7e6cd;
+
+  --err-bg: #fdecea;
+  --err-text: #a2201a;
+  --err-border: #f5c2be;
+
+  --warn-bg: #fff4d6;
+  --warn-text: #7a5a00;
+  --warn-border: #f0d58a;
+
+  /* misc details */
+  --pill-bg: var(--brown);
+  --pill-text: var(--banana);
+  --row-alt: #fffcf0;
+  --gold: #b07d00;
+  --tint: rgba(43, 29, 14, 0.07);
+  --skeleton: rgba(43, 29, 14, 0.08);
+  --overlay-surface: rgba(255, 253, 245, 0.94);
+  --overlay-backdrop: rgba(43, 29, 14, 0.45);
 
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   color: var(--brown);
@@ -17,6 +59,50 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Dark theme: warm "roasted banana" palette instead of pure black, so it still
+ * feels like the same product.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --banana-soft: #3a2f10;
+
+  --brown: #f3e8d4;
+  --brown-soft: #bfae8e;
+
+  --cream: #12100a;
+  --white: #1e1a12;
+  --border: #3a3226;
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+
+  --green: #43cf8e;
+  --red: #ff6b6b;
+
+  --ok-bg: #10301f;
+  --ok-text: #7ce0b0;
+  --ok-border: #1f5c3f;
+
+  --err-bg: #3a1512;
+  --err-text: #ffb4ae;
+  --err-border: #6b2620;
+
+  --warn-bg: #3a2c08;
+  --warn-text: #ffd980;
+  --warn-border: #6b520f;
+
+  /* Yellow pills read better than light-brown ones on a dark page. */
+  --pill-bg: var(--banana);
+  --pill-text: var(--ink);
+
+  --row-alt: #262117;
+  --gold: #ffd166;
+  --tint: rgba(255, 255, 255, 0.09);
+  --skeleton: rgba(255, 255, 255, 0.1);
+  --overlay-surface: rgba(30, 26, 18, 0.95);
+  --overlay-backdrop: rgba(0, 0, 0, 0.65);
 }
 
 *,
@@ -29,6 +115,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background: var(--cream);
+  /* Theme changes should feel intentional, not jarring. */
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -42,4 +130,11 @@ input {
 
 button {
   cursor: pointer;
+}
+
+/* Keep native widgets (scrollbars, date pickers, autofill) in the right mood. */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+  color-scheme: dark;
 }

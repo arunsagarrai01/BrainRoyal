@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import gameRoutes from "./routes/game.js";
 import db, { getDb, getDriverName, closeDb } from "./config/db.js";
 import { initSchema } from "./db/init.js";
+import { purgeExpiredSessions } from "./services/sessions.js";
 
 dotenv.config();
 
@@ -19,11 +20,20 @@ const allowedOrigins = [
 
 app.use(
   cors({
+    // Reflect the caller's origin and allow credentials: the browser must be able
+    // to send/receive the httpOnly session cookie. (Wildcard "*" is not allowed
+    // together with credentials, which is why we echo the origin instead.)
     origin: (origin, callback) => {
-      // Allow non-browser clients (curl, tests) and configured dev origins.
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(null, true);
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, origin || true);
+      }
+      // Dev convenience: any localhost/127.0.0.1 port is accepted.
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
     },
+    credentials: true,
   })
 );
 app.use(express.json({ limit: "100kb" }));
@@ -39,9 +49,16 @@ app.get("/", (_req, res) => {
     message: "BrainRoyale API is running",
     driver: getDriverName(),
     endpoints: [
+      "GET  /api/auth/captcha",
       "POST /api/auth/register",
       "POST /api/auth/login",
+      "POST /api/auth/logout",
+      "POST /api/auth/logout-all",
       "GET  /api/auth/me",
+      "PATCH /api/auth/me",
+      "POST /api/auth/change-password",
+      "GET  /api/auth/sessions",
+      "DELETE /api/auth/sessions/:id",
       "GET  /api/game/question",
       "POST /api/game/answer",
       "POST /api/game/score",
@@ -82,6 +99,15 @@ async function start() {
       process.env.JWT_SECRET = "dev-only-insecure-secret";
       console.warn("[auth] JWT_SECRET not set - using an insecure development secret");
     }
+
+    // Housekeeping: drop expired sessions on boot and once an hour after that.
+    const purged = await purgeExpiredSessions();
+    if (purged) console.log(`[db] Removed ${purged} expired session(s)`);
+    setInterval(() => {
+      purgeExpiredSessions().catch((err) =>
+        console.error("[db] session cleanup failed:", err.message)
+      );
+    }, 60 * 60 * 1000).unref();
 
     const server = app.listen(PORT, () => {
       console.log(`[api] BrainRoyale API on http://localhost:${PORT}`);

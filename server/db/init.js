@@ -11,6 +11,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 export async function initSchema() {
   const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
-  await db.exec(schema);
+  try {
+    await db.exec(schema);
+  } catch (err) {
+    console.error("[db] Schema initialization failed:", err.message);
+    console.error(
+      "[db] If the embedded PGlite data directory is unrecoverable, stop the server, " +
+        "delete server/.pgdata and restart (this resets local dev data only)."
+    );
+    throw err;
+  }
   console.log("[db] Schema ready");
 }

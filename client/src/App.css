@@ -1,4 +1,4 @@
-/* ---------- layout ---------- */
+﻿/* ---------- layout ---------- */
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -20,7 +20,7 @@
 /* ---------- navbar ---------- */
 .navbar {
   background: var(--white);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid var(--border); 
   position: sticky;
   top: 0;
   z-index: 20;
@@ -85,7 +85,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--banana);
-  color: var(--brown);
+  color: var(--ink);
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -115,7 +115,7 @@
 
 .btn--primary {
   background: var(--banana);
-  color: var(--brown);
+  color: var(--ink);
   box-shadow: 0 4px 0 #d9a900;
 }
 
@@ -181,7 +181,7 @@
   font-size: clamp(1.9rem, 4vw, 2.9rem);
   line-height: 1.08;
   margin: 0 0 12px;
-  color: var(--brown);
+  color: var(--ink);
   letter-spacing: -0.02em;
 }
 
@@ -262,9 +262,9 @@
 }
 
 .error-banner {
-  background: #fdecea;
-  color: #a2201a;
-  border: 1px solid #f5c2be;
+  background: var(--err-bg);
+  color: var(--err-text);
+  border: 1px solid var(--err-border);
   border-radius: 12px;
   padding: 10px 14px;
   margin-bottom: 16px;
@@ -272,9 +272,9 @@
 }
 
 .success-banner {
-  background: #e7f7ef;
-  color: #147a4d;
-  border: 1px solid #b7e6cd;
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border: 1px solid var(--ok-border);
   border-radius: 12px;
   padding: 10px 14px;
   margin-bottom: 16px;
@@ -362,8 +362,8 @@
 }
 
 .score-pill {
-  background: var(--brown);
-  color: var(--banana);
+  background: var(--pill-bg);
+  color: var(--pill-text);
   border-radius: 999px;
   padding: 8px 18px;
   font-weight: 800;
@@ -475,7 +475,7 @@ table.leaderboard td {
 }
 
 table.leaderboard tbody tr:nth-child(even) {
-  background: #fffcf0;
+  background: var(--row-alt);
 }
 
 .rank {
@@ -484,7 +484,7 @@ table.leaderboard tbody tr:nth-child(even) {
 }
 
 .rank--gold {
-  color: #b07d00;
+  color: var(--gold);
 }
 
 .player {
@@ -537,5 +537,525 @@ table.leaderboard tbody tr:nth-child(even) {
     width: 100%;
     justify-content: space-between;
     gap: 10px;
+  }
+}
+
+/* ---------- password field (eye toggle) ---------- */
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 50px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: var(--tint);
+}
+
+.field__hint {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--brown-soft);
+}
+
+/* ---------- remember me ---------- */
+.checkbox-row {
+  margin: 4px 0 14px;
+}
+
+.checkbox-row label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.93rem;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--banana-deep);
+  flex: none;
+}
+
+.checkbox-row small {
+  font-size: 0.8rem;
+}
+
+/* ---------- captcha ---------- */
+.captcha-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: var(--banana-soft);
+  margin-bottom: 8px;
+}
+
+.captcha-question {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- login lockout ---------- */
+.lock-banner {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn-text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 0.92rem;
+}
+
+/* ---------- danger button ---------- */
+.btn--danger {
+  background: #e5484d;
+  color: #fff;
+  box-shadow: 0 4px 0 #b0363a;
+}
+
+.btn--danger:hover {
+  background: #d93d42;
+}
+
+/* ---------- profile ---------- */
+.profile-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-identity h2 {
+  margin: 0 0 2px;
+}
+
+.profile-identity p {
+  margin: 0;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--banana);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  font-weight: 900;
+  flex: none;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--pill-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge--soft {
+  background: var(--banana-soft);
+  color: var(--brown);
+}
+
+.badge--current {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  margin-left: 8px;
+}
+
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 16px;
+  min-width: 110px;
+}
+
+.mini-stat strong {
+  font-size: 1.1rem;
+  color: var(--brown);
+}
+
+.grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card__title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.card__head p {
+  margin: 0;
+}
+
+.small {
+  font-size: 0.82rem;
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--cream);
+  flex-wrap: wrap;
+}
+
+.session-icon {
+  font-size: 1.25rem;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.session-info strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- game HUD ---------- */
+a.navbar__user {
+  text-decoration: none;
+  color: var(--brown);
+}
+
+.game-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-hud {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 14px;
+}
+
+.hud-stat strong {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.hud-danger {
+  color: var(--red);
+}
+
+.timer-bar {
+  height: 10px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.timer-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--banana), var(--green));
+  transition: width 0.1s linear;
+}
+
+.timer-bar--danger span {
+  background: var(--red);
+}
+
+.puzzle-card {
+  position: relative;
+}
+
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+  text-align: center;
+  background: var(--overlay-surface);
+  border-radius: 24px;
+}
+
+.pause-overlay h2 {
+  margin: 0;
+}
+
+.pause-overlay p {
+  margin: 0 0 10px;
+}
+
+.pause-overlay__emoji {
+  font-size: 2.6rem;
+}
+
+.keyboard-hint {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+}
+
+.keyboard-hint kbd {
+  font-family: inherit;
+  font-weight: 700;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.78rem;
+}
+
+.result-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ---------- dialogs ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--overlay-backdrop);
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.modal__title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.modal__body p {
+  margin: 0;
+}
+
+.modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ---------- responsive additions ---------- */
+@media (max-width: 720px) {
+  .grid--two {
+    grid-template-columns: 1fr;
+  }
+
+  .game-hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-tools {
+    width: 100%;
+  }
+
+  .profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modal__actions {
+    justify-content: stretch;
+  }
+
+  .modal__actions .btn {
+    flex: 1;
+  }
+}
+
+/* ---------- public home page ---------- */
+.home-gate {
+  margin: 14px 0 0;
+  font-size: 0.88rem;
+  color: var(--brown-soft);
+}
+
+.home-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 34px;
+  padding: 24px 26px;
+  background: var(--banana-soft);
+  border: 2px solid var(--border);
+  border-radius: 22px;
+}
+
+.home-cta h2 {
+  margin: 0 0 4px;
+}
+
+.home-cta p {
+  margin: 0;
+}
+
+.home-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .home-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-cta__actions {
+    width: 100%;
+  }
+
+  .home-cta__actions .btn {
+    flex: 1;
+  }
+}
+
+/* Placeholders keep the layout steady while /auth/me resolves. */
+.navbar__placeholder {
+  display: inline-block;
+  width: 220px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--skeleton);
+}
+
+.home-cta-skeleton {
+  display: inline-block;
+  width: 260px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--skeleton);
+}
+
+/* ---------- theme toggle ---------- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.theme-toggle span[aria-hidden="true"] {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Dark mode keeps the yellow "brand card" readable: the hero stays banana
+   coloured in both themes, so its text always uses the dark ink colour. */
+:root[data-theme="dark"] .hero p {
+  color: #4d3a22;
+}
+
+@media (max-width: 720px) {
+  .theme-toggle__label {
+    display: none;
   }
 }

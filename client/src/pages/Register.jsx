@@ -2,25 +2,50 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import PasswordField from "../components/PasswordField";
+
+const PASSWORD_HINT =
+  "At least 8 characters, including a letter and a number.";
 
 const Register = () => {
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (event) =>
+    setForm((previous) => ({
+      ...previous,
+      [event.target.name]: event.target.value,
+    }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
+
+    // Client-side check only for a faster message; the server validates again.
+    if (form.password !== form.confirmPassword) {
+      setError("The two passwords do not match.");
+      return;
+    }
+
     setBusy(true);
     try {
-      const { data } = await api.post("/auth/register", form);
-      login(data.token, data.user);
-      navigate("/dashboard");
+      const { data } = await api.post("/auth/register", {
+        username: form.username,
+        email: form.email,
+        password: form.password,
+      });
+
+      login(data.user, data.session);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again."
@@ -69,22 +94,34 @@ const Register = () => {
             />
           </div>
 
-          <div className="field">
-            <label htmlFor="reg-password">Password</label>
-            <input
-              id="reg-password"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="At least 6 characters"
-              minLength={6}
-              autoComplete="new-password"
-              required
-            />
-          </div>
+          <PasswordField
+            id="reg-password"
+            name="password"
+            label="Password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Create a strong password"
+            autoComplete="new-password"
+            minLength={8}
+            hint={PASSWORD_HINT}
+          />
 
-          <button className="btn btn--primary btn--block" type="submit" disabled={busy}>
+          <PasswordField
+            id="reg-password-confirm"
+            name="confirmPassword"
+            label="Confirm password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            placeholder="Type it again"
+            autoComplete="new-password"
+            minLength={8}
+          />
+
+          <button
+            className="btn btn--primary btn--block"
+            type="submit"
+            disabled={busy}
+          >
             {busy ? "Creating account…" : "Register"}
           </button>
         </form>

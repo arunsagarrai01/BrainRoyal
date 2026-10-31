@@ -1,28 +1,128 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import PasswordField from "../components/PasswordField";
+import CaptchaField from "../components/CaptchaField";
+
+/** Last email used with "Remember me", prefilled on the next visit. */
+const REMEMBERED_EMAIL_KEY = "brainroyale:remembered-email";
+
+const formatCountdown = (totalSeconds) => {
+  const safe = Math.max(0, Math.round(totalSeconds));
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+};
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [remember, setRemember] = useState(false);
+  const [captcha, setCaptcha] = useState(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [error, setError] = useState("");
+  const [lockSeconds, setLockSeconds] = useState(0);
   const [busy, setBusy] = useState(false);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const locked = lockSeconds > 0;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleChange = (event) =>
+    setForm((previous) => ({
+      ...previous,
+      [event.target.name]: event.target.value,
+    }));
+
+  /** Fetches a fresh challenge; old ones are single-use so this is always needed. */
+  const loadCaptcha = useCallback(async () => {
+    setCaptchaLoading(true);
+    try {
+      const { data } = await api.get("/auth/captcha");
+      setCaptcha(data);
+      setCaptchaAnswer("");
+    } catch {
+      setCaptcha(null);
+      setError(
+        "Could not load the security check. Is the API running on the configured port?"
+      );
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCaptcha();
+
+    const rememberedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+    if (rememberedEmail) {
+      setForm((previous) => ({ ...previous, email: rememberedEmail }));
+      setRemember(true);
+    }
+  }, [loadCaptcha]);
+
+  // Live countdown while the account is locked out.
+  useEffect(() => {
+    if (!locked) return undefined;
+
+    const interval = setInterval(() => {
+      setLockSeconds((seconds) => (seconds <= 1 ? 0 : seconds - 1));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [locked]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (locked || busy) return;
+
+    if (!captchaAnswer.trim()) {
+      setError("Please answer the security check.");
+      return;
+    }
+
     setError("");
     setBusy(true);
+
     try {
-      const { data } = await api.post("/auth/login", form);
-      login(data.token, data.user);
-      navigate("/dashboard");
+      const { data } = await api.post("/auth/login", {
+        email: form.email,
+        password: form.password,
+        remember,
+        captchaId: captcha?.captchaId,
+        captchaAnswer,
+      });
+
+      // "Remember me" also remembers the email address on this device.
+      const email = form.email.trim().toLowerCase();
+      if (remember) localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      else localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+
+      login(data.user, data.session);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      const status = err.response?.status;
+      const data = err.response?.data || {};
+
+      if (status === 429 && data.retryAfter) {
+        setLockSeconds(Number(data.retryAfter));
+      }
+
+      let message = data.message || "Login failed. Please try again.";
+      if (data.remainingAttempts > 0) {
+        message += ` ${data.remainingAttempts} attempt${
+          data.remainingAttempts === 1 ? "" : "s"
+        } left before the account is locked.`;
+      }
+      setError(message);
+
+      // A CAPTCHA is one-time: always fetch a new one after a failure.
+      if (data.code === "CAPTCHA_INVALID" || data.code === "CAPTCHA_REQUIRED") {
+        loadCaptcha();
+      }
     } finally {
       setBusy(false);
     }
@@ -35,6 +135,13 @@ const Login = () => {
         <p>Sign in to keep your streak going.</p>
 
         {error && <div className="error-banner">{error}</div>}
+
+        {locked && (
+          <div className="lock-banner" role="status">
+            🔒 Too many failed attempts. You can try again in{" "}
+            <strong>{formatCountdown(lockSeconds)}</strong>.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="field">
@@ -51,22 +158,49 @@ const Login = () => {
             />
           </div>
 
-          <div className="field">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Your password"
-              autoComplete="current-password"
-              required
-            />
+          <PasswordField
+            id="login-password"
+            name="password"
+            label="Password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Your password"
+            autoComplete="current-password"
+          />
+
+          <div className="checkbox-row">
+            <label htmlFor="remember-me">
+              <input
+                id="remember-me"
+                type="checkbox"
+                name="remember"
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+              />
+              <span>
+                Remember me for 30 days
+                <small className="muted">
+                  {" "}
+                  (otherwise the session ends when the browser closes)
+                </small>
+              </span>
+            </label>
           </div>
 
-          <button className="btn btn--primary btn--block" type="submit" disabled={busy}>
-            {busy ? "Signing in…" : "Login"}
+          <CaptchaField
+            question={captcha?.question}
+            value={captchaAnswer}
+            onChange={(event) => setCaptchaAnswer(event.target.value)}
+            onRefresh={loadCaptcha}
+            loading={captchaLoading}
+          />
+
+          <button
+            className="btn btn--primary btn--block"
+            type="submit"
+            disabled={busy || locked || captchaLoading}
+          >
+            {busy ? "Signing in…" : locked ? "Temporarily locked" : "Login"}
           </button>
         </form>
 
