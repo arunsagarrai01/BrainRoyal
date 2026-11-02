@@ -28,7 +28,7 @@ router.post("/logout-all", requireAuth, logoutAll);
 router.get("/me", requireAuth, getMe);
 router.patch("/me", requireAuth, updateProfile);
 
-router.post("/change-password", requireAuth, changePassword);
+router.post("/change-password", changePassword);
 
 router.get("/sessions", requireAuth, getSessions);
 router.delete("/sessions/:id", requireAuth, deleteSession);
