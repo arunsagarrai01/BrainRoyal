@@ -4,7 +4,7 @@ import api from "../api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { getSoundEnabled, playTone, setSoundEnabled } from "../utils/sound";
 
-const PUZZLE_SECONDS = 30;
+const PUZZLE_SECONDS = 60;
 const MAX_LIVES = 3;
 
 const newRunId = () =>
